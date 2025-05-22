@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Page</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="order-container">
+    <h1>Order Your Product</h1>
+
+    <!-- Product Information -->
+    <p><strong>Jar Jenny</strong> - $29.99</p>
+    
+    <!-- Shipping Information -->
+    <label for="shipping-method">Choose Shipping Method:</label>
+    <select id="shipping-method" name="shipping-method" onchange="updateShippingCost()">
+      <option value="usps">USPS - $5.00</option>
+      <option value="ups">UPS - $10.00</option>
+      <option value="fedex">FedEx - $8.00</option>
+    </select>
+
+    <p id="shipping-cost">Shipping Cost: $5.00</p>
+    
+    <p id="total-cost">Total: $34.99</p>
+
+    <!-- PayPal Button -->
+    <div id="paypal-button-container">
+      <!-- PayPal button will be rendered here -->
+    </div>
+    
+    <!-- Shipping Tracking Info (Manual for now) -->
+    <div id="tracking-info">
+      <p>Your tracking number will appear here after purchase.</p>
+    </div>
+  </div>
+
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID&components=buttons"></script>
+  
+  <script>
+    // Update shipping cost dynamically based on the selected method
+    function updateShippingCost() {
+      const shippingSelect = document.getElementById("shipping-method");
+      const shippingCostElement = document.getElementById("shipping-cost");
+      const totalCostElement = document.getElementById("total-cost");
+
+      let shippingCost = 5.00; // Default USPS rate
+      if (shippingSelect.value === "ups") shippingCost = 10.00;
+      else if (shippingSelect.value === "fedex") shippingCost = 8.00;
+
+      // Update the shipping cost displayed
+      shippingCostElement.innerText = `Shipping Cost: $${shippingCost.toFixed(2)}`;
+      // Update the total price
+      totalCostElement.innerText = `Total: $${(29.99 + shippingCost).toFixed(2)}`;
+    }
+
+    // Render PayPal button
+    paypal.Buttons({
+      createOrder: function(data, actions) {
+        const shippingSelect = document.getElementById("shipping-method");
+        let shippingCost = 5.00; // Default shipping cost
+        if (shippingSelect.value === "ups") shippingCost = 10.00;
+        else if (shippingSelect.value === "fedex") shippingCost = 8.00;
+
+        return actions.order.create({
+          purchase_units: [{
+            amount: {
+              value: (29.99 + shippingCost).toFixed(2),  // Product + Shipping
+              breakdown: {
+                item_total: { value: '29.99' },           // Product price
+                shipping: { value: shippingCost.toFixed(2) } // Shipping cost
+              }
+            },
+            items: [{
+              name: 'Jar Jenny',
+              quantity: 1,
+              unit_amount: { value: '29.99' }
+            }]
+          }]
+        });
+      },
+      onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+          // Once payment is successful, show tracking info (simplified for this example)
+          document.getElementById("tracking-info").innerHTML = `
+            <p>Your order is confirmed! Tracking number: <strong>ABC123456789</strong></p>
+          `;
+        });
+      }
+    }).render('#paypal-button-container');
+  </script>
+
+</body>
+</html>
